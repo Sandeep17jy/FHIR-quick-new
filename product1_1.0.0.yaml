@@ -4,7 +4,7 @@ info:
   name: product1
 apis:
   test1.0.0:
-    $ref: ./test_1.0.0.yaml
+    $ref: branches_1.0.0.yaml
 gateways:
   - datapower-gateway
 plans:
