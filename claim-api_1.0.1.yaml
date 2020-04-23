@@ -1,0 +1,1401 @@
+swagger: '2.0'
+info:
+  title: claim-api
+  x-ibm-name: claim-api
+  version: 1.0.1
+host: $(catalog.host)
+schemes:
+  - https
+basePath: /ibmfhir/v101
+produces:
+  - application/json
+consumes:
+  - application/json
+security:
+  - clientIdHeader: []
+    clientSecretHeader: []
+securityDefinitions:
+  clientIdHeader:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+  clientSecretHeader:
+    in: header
+    name: X-IBM-Client-Secret
+    type: apiKey
+x-ibm-configuration:
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+      - switch:
+          version: 2.0.0
+          title: switch
+          case:
+            - condition: (($operationID() = 'Claim.create'))
+              execute:
+                - invoke:
+                    version: 2.0.0
+                    target-url: 'https://$(fhir_host)$(api.operation.path)'
+                    verb: keep
+                    header-control:
+                      type: blacklist
+                      values: []
+                    parameter-control:
+                      type: blacklist
+                      values: []
+                    username: fhiruser
+                    password: Pass@1234
+            - condition: (($operationID() = 'Claim.get'))
+              execute:
+                - invoke:
+                    version: 2.0.0
+                    target-url: 'https://$(fhir_host)$(api.operation.path)'
+                    verb: keep
+                    header-control:
+                      type: blacklist
+                      values: []
+                    parameter-control:
+                      type: blacklist
+                      values: []
+                    username: fhiruser
+                    password: Pass@1234
+          otherwise: []
+  properties:
+    fhir_host:
+      value: 'gitlab.prolifics.com:9443/fhir-server/api/v4'
+      description: Watson FHIR Server host
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+  catalogs: {}
+definitions:
+  Claim:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      resourceType:
+        description: This is a Claim resource
+        enum:
+          - Claim
+        type: string
+      id:
+        description: >-
+          The logical id of the resource, as used in the URL for the resource.
+          Once assigned, this value never changes.
+        $ref: '#/definitions/id'
+      meta:
+        description: >-
+          The metadata about the resource. This is content that is maintained by
+          the infrastructure. Changes to the content might not always be
+          associated with version changes to the resource.
+        $ref: '#/definitions/Meta'
+      implicitRules:
+        description: >-
+          A reference to a set of rules that were followed when the resource was
+          constructed, and which must be understood when processing the content.
+          Often, this is a reference to an implementation guide that defines the
+          special rules along with other profiles etc.
+        $ref: '#/definitions/uri'
+      language:
+        description: The base language in which the resource is written.
+        $ref: '#/definitions/code'
+      text:
+        description: >-
+          A human-readable narrative that contains a summary of the resource and
+          can be used to represent the content of the resource to a human. The
+          narrative need not encode all the structured data, but is required to
+          contain sufficient detail to make it "clinically safe" for a human to
+          just read the narrative. Resource definitions may define what content
+          should be represented in the narrative to ensure clinical safety.
+        $ref: '#/definitions/Narrative'
+      contained:
+        description: >-
+          These resources do not have an independent existence apart from the
+          resource that contains them - they cannot be identified independently,
+          and nor can they have their own independent transaction scope.
+        items:
+          $ref: '#/definitions/ResourceList'
+        type: array
+      identifier:
+        description: A unique identifier assigned to this claim.
+        items:
+          $ref: '#/definitions/Identifier'
+        type: array
+      status:
+        description: The status of the resource instance.
+        $ref: '#/definitions/code'
+      type:
+        description: >-
+          The category of claim, e.g. oral, pharmacy, vision, institutional,
+          professional.
+        $ref: '#/definitions/CodeableConcept'
+      subType:
+        description: >-
+          A finer grained suite of claim type codes which may convey additional
+          information such as Inpatient vs Outpatient and/or a specialty
+          service.
+        $ref: '#/definitions/CodeableConcept'
+      use:
+        description: >-
+          A code to indicate whether the nature of the request is: to request
+          adjudication of products and services previously rendered; or
+          requesting authorization and adjudication for provision in the future;
+          or requesting the non-binding adjudication of the listed products and
+          services which could be provided in the future.
+        enum:
+          - claim
+          - preauthorization
+          - predetermination
+        type: string
+      patient:
+        description: >-
+          The party to whom the professional services and/or products have been
+          supplied or are being considered and for whom actual or forecast
+          reimbursement is sought.
+        $ref: '#/definitions/id'
+      billablePeriod:
+        description: The period for which charges are being submitted.
+        $ref: '#/definitions/Period'
+      created:
+        description: The date this resource was created.
+        $ref: '#/definitions/dateTime'
+      enterer:
+        description: >-
+          Individual who created the claim, predetermination or
+          preauthorization.
+        $ref: '#/definitions/id'
+      insurer:
+        description: The Insurer who is target of the request.
+        $ref: '#/definitions/id'
+      provider:
+        description: >-
+          The provider which is responsible for the claim, predetermination or
+          preauthorization.
+        $ref: '#/definitions/id'
+      priority:
+        description: >-
+          The provider-required urgency of processing the request. Typical
+          values include: stat, routine deferred.
+        $ref: '#/definitions/CodeableConcept'
+      fundsReserve:
+        description: >-
+          A code to indicate whether and for whom funds are to be reserved for
+          future claims.
+        $ref: '#/definitions/CodeableConcept'
+      related:
+        description: >-
+          Other claims which are related to this claim such as prior submissions
+          or claims for related services or for the same event.
+        items:
+          $ref: '#/definitions/Claim_Related'
+        type: array
+      prescription:
+        description: >-
+          Prescription to support the dispensing of pharmacy, device or vision
+          products.
+        $ref: '#/definitions/id'
+      originalPrescription:
+        description: >-
+          Original prescription which has been superseded by this prescription
+          to support the dispensing of pharmacy services, medications or
+          products.
+        $ref: '#/definitions/id'
+      payee:
+        description: >-
+          The party to be reimbursed for cost of the products and services
+          according to the terms of the policy.
+        $ref: '#/definitions/Claim_Payee'
+      referral:
+        description: A reference to a referral resource.
+        $ref: '#/definitions/id'
+      facility:
+        description: Facility where the services were provided.
+        $ref: '#/definitions/id'
+      careTeam:
+        description: The members of the team who provided the products and services.
+        items:
+          $ref: '#/definitions/Claim_CareTeam'
+        type: array
+      supportingInfo:
+        description: >-
+          Additional information codes regarding exceptions, special
+          considerations, the condition, situation, prior or concurrent issues.
+        items:
+          $ref: '#/definitions/Claim_SupportingInfo'
+        type: array
+      diagnosis:
+        description: Information about diagnoses relevant to the claim items.
+        items:
+          $ref: '#/definitions/Claim_Diagnosis'
+        type: array
+      procedure:
+        description: >-
+          Procedures performed on the patient relevant to the billing items with
+          the claim.
+        items:
+          $ref: '#/definitions/Claim_Procedure'
+        type: array
+      insurance:
+        description: >-
+          Financial instruments for reimbursement for the health care products
+          and services specified on the claim.
+        items:
+          $ref: '#/definitions/Claim_Insurance'
+        type: array
+      accident:
+        description: >-
+          Details of an accident which resulted in injuries which required the
+          products and services listed in the claim.
+        $ref: '#/definitions/Claim_Accident'
+      item:
+        description: >-
+          A claim line. Either a simple  product or service or a 'group' of
+          details which can each be a simple items or groups of sub-details.
+        items:
+          $ref: '#/definitions/Claim_Item'
+        type: array
+      total:
+        description: The total value of the all the items in the claim.
+        $ref: '#/definitions/Money'
+    additionalProperties: false
+    required:
+      - insurance
+      - provider
+      - patient
+      - type
+      - priority
+      - resourceType
+  id:
+    pattern: '^[A-Za-z0-9\-\.]{1,64}$'
+    type: string
+    description: >-
+      Any combination of letters, numerals, "-" and ".", with a length limit of
+      64 characters.  (This might be an integer, an unprefixed OID, UUID or any
+      other identifier pattern that meets these constraints.)  Ids are
+      case-insensitive.
+  Meta:
+    description: >-
+      The metadata about a resource. This is content in the resource that is
+      maintained by the infrastructure. Changes to the content might not always
+      be associated with version changes to the resource.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      versionId:
+        description: >-
+          The version specific identifier, as it appears in the version portion
+          of the URL. This value changes when the resource is created, updated,
+          or deleted.
+        $ref: '#/definitions/id'
+      lastUpdated:
+        description: When the resource last changed - e.g. when the version changed.
+        $ref: '#/definitions/instant'
+      source:
+        description: >-
+          A uri that identifies the source system of the resource. This provides
+          a minimal amount of [[[Provenance]]] information that can be used to
+          track or differentiate the source of information in the resource. The
+          source may identify another FHIR server, document, message, database,
+          etc.
+        $ref: '#/definitions/uri'
+      profile:
+        description: >-
+          A list of profiles (references to [[[StructureDefinition]]] resources)
+          that this resource claims to conform to. The URL is a reference to
+          [[[StructureDefinition.url]]].
+        items:
+          $ref: '#/definitions/canonical'
+        type: array
+      security:
+        description: >-
+          Security labels applied to this resource. These tags connect specific
+          resources to the overall security policy and infrastructure.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+      tag:
+        description: >-
+          Tags applied to this resource. Tags are intended to be used to
+          identify and relate resources to process and workflow, and
+          applications are not required to consider the tags when interpreting
+          the meaning of a resource.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+    additionalProperties: false
+  string:
+    pattern: '^[ \r\n\t\S]+$'
+    type: string
+    description: A sequence of Unicode characters
+  instant:
+    pattern: >-
+      ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))$
+    type: string
+    description: An instant in time - known at least to the second
+  uri:
+    pattern: ^\S*$
+    type: string
+    description: String of characters used to identify a name or a resource
+  canonical:
+    pattern: ^\S*$
+    type: string
+    description: A URI that is a reference to a canonical URL on a FHIR resource
+  Coding:
+    description: A reference to a code defined by a terminology system.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      system:
+        description: >-
+          The identification of the code system that defines the meaning of the
+          symbol in the code.
+        $ref: '#/definitions/uri'
+      version:
+        description: >-
+          The version of the code system which was used when choosing this code.
+          Note that a well-maintained code system does not need the version
+          reported, because the meaning of codes is consistent across versions.
+          However this cannot consistently be assured, and when the meaning is
+          not guaranteed to be consistent, the version SHOULD be exchanged.
+        $ref: '#/definitions/string'
+      code:
+        description: >-
+          A symbol in syntax defined by the system. The symbol may be a
+          predefined code or an expression in a syntax defined by the coding
+          system (e.g. post-coordination).
+        $ref: '#/definitions/code'
+      display:
+        description: >-
+          A representation of the meaning of the code in the system, following
+          the rules of the system.
+        $ref: '#/definitions/string'
+      userSelected:
+        description: >-
+          Indicates that this coding was chosen by a user directly - e.g. off a
+          pick list of available items (codes or displays).
+        $ref: '#/definitions/boolean'
+    additionalProperties: false
+  code:
+    pattern: '^[^\s]+(\s[^\s]+)*$'
+    type: string
+    description: >-
+      A string which has at least one character and no leading or trailing
+      whitespace and where there is no whitespace other than single spaces in
+      the contents
+  boolean:
+    pattern: ^true|false$
+    type: boolean
+    description: Value of "true" or "false"
+  Narrative:
+    description: >-
+      A human-readable summary of the resource conveying the essential clinical
+      and business information for the resource.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      status:
+        description: >-
+          The status of the narrative - whether it's entirely generated (from
+          just the defined data or the extensions too), or whether a human
+          authored it and it may contain additional data.
+        enum:
+          - generated
+          - extensions
+          - additional
+          - empty
+        type: string
+      div:
+        description: 'The actual narrative content, a stripped down version of XHTML.'
+        $ref: '#/definitions/xhtml'
+    additionalProperties: false
+    required:
+      - div
+  xhtml:
+    description: xhtml - escaped html (see specfication)
+  Identifier:
+    description: >-
+      An identifier - identifies some entity uniquely and unambiguously.
+      Typically this is used for business identifiers.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      use:
+        description: The purpose of this identifier.
+        enum:
+          - usual
+          - official
+          - temp
+          - secondary
+          - old
+        type: string
+      type:
+        description: >-
+          A coded type for the identifier that can be used to determine which
+          identifier to use for a specific purpose.
+        $ref: '#/definitions/CodeableConcept'
+      system:
+        description: >-
+          Establishes the namespace for the value - that is, a URL that
+          describes a set values that are unique.
+        $ref: '#/definitions/uri'
+      value:
+        description: >-
+          The portion of the identifier typically relevant to the user and which
+          is unique within the context of the system.
+        $ref: '#/definitions/string'
+      period:
+        description: Time period during which identifier is/was valid for use.
+        $ref: '#/definitions/Period'
+      assigner:
+        description: Organization that issued/manages the identifier.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+  CodeableConcept:
+    description: >-
+      A concept that may be defined by a formal reference to a terminology or
+      ontology or may be provided by text.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      coding:
+        description: A reference to a code defined by a terminology system.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+      text:
+        description: >-
+          A human language representation of the concept as
+          seen/selected/uttered by the user who entered the data and/or which
+          represents the intended meaning of the user.
+        $ref: '#/definitions/string'
+    additionalProperties: false
+  Period:
+    description: A time period defined by a start and end date and optionally time.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      start:
+        description: The start of the period. The boundary is inclusive.
+        $ref: '#/definitions/dateTime'
+      end:
+        description: >-
+          The end of the period. If the end of the period is missing, it means
+          no end was known or planned at the time the instance was created. The
+          start may be in the past, and the end date in the future, which means
+          that period is expected/planned to end at that time.
+        $ref: '#/definitions/dateTime'
+    additionalProperties: false
+  dateTime:
+    pattern: >-
+      ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$
+    type: string
+    description: >-
+      A date, date-time or partial date (e.g. just year or year + month).  If
+      hours and minutes are specified, a time zone SHALL be populated. The
+      format is a union of the schema types gYear, gYearMonth, date and
+      dateTime. Seconds must be provided due to schema type constraints but may
+      be zero-filled and may be ignored.                 Dates SHALL be valid
+      dates.
+  Claim_Related:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      claim:
+        description: Reference to a related claim.
+        $ref: '#/definitions/id'
+      relationship:
+        description: A code to convey how the claims are related.
+        $ref: '#/definitions/CodeableConcept'
+      reference:
+        description: >-
+          An alternate organizational reference to the case or file to which
+          this particular claim pertains.
+        $ref: '#/definitions/Identifier'
+    additionalProperties: false
+  Claim_Payee:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      type:
+        description: 'Type of Party to be reimbursed: subscriber, provider, other.'
+        $ref: '#/definitions/CodeableConcept'
+      party:
+        description: >-
+          Reference to the individual or organization to whom any payment will
+          be made.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+    required:
+      - type
+  Claim_CareTeam:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify care team entries.
+        $ref: '#/definitions/positiveInt'
+      provider:
+        description: Member of the team who provided the product or service.
+        $ref: '#/definitions/id'
+      responsible:
+        description: >-
+          The party who is billing and/or responsible for the claimed products
+          or services.
+        $ref: '#/definitions/boolean'
+      role:
+        description: >-
+          The lead, assisting or supervising practitioner and their discipline
+          if a multidisciplinary team.
+        $ref: '#/definitions/CodeableConcept'
+      qualification:
+        description: >-
+          The qualification of the practitioner which is applicable for this
+          service.
+        $ref: '#/definitions/CodeableConcept'
+    additionalProperties: false
+    required:
+      - provider
+  positiveInt:
+    pattern: '^[1-9][0-9]*$'
+    type: number
+    description: An integer with a value that is positive (e.g. >0)
+  Claim_SupportingInfo:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify supporting information entries.
+        $ref: '#/definitions/positiveInt'
+      category:
+        description: >-
+          The general class of the information supplied: information; exception;
+          accident, employment; onset, etc.
+        $ref: '#/definitions/CodeableConcept'
+      code:
+        description: >-
+          System and code pertaining to the specific information regarding
+          special conditions relating to the setting, treatment or patient  for
+          which care is sought.
+        $ref: '#/definitions/CodeableConcept'
+      timingDate:
+        description: The date when or period to which this information refers.
+        pattern: >-
+          ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?$
+        type: string
+      timingPeriod:
+        description: The date when or period to which this information refers.
+        $ref: '#/definitions/Period'
+      valueBoolean:
+        description: >-
+          Additional data or information such as resources, documents, images
+          etc. including references to the data or the actual inclusion of the
+          data.
+        pattern: ^true|false$
+        type: boolean
+      valueString:
+        description: >-
+          Additional data or information such as resources, documents, images
+          etc. including references to the data or the actual inclusion of the
+          data.
+        pattern: '^[ \r\n\t\S]+$'
+        type: string
+      valueQuantity:
+        description: >-
+          Additional data or information such as resources, documents, images
+          etc. including references to the data or the actual inclusion of the
+          data.
+        $ref: '#/definitions/Quantity'
+      valueAttachment:
+        description: >-
+          Additional data or information such as resources, documents, images
+          etc. including references to the data or the actual inclusion of the
+          data.
+        $ref: '#/definitions/Attachment'
+      valueReference:
+        description: >-
+          Additional data or information such as resources, documents, images
+          etc. including references to the data or the actual inclusion of the
+          data.
+        $ref: '#/definitions/id'
+      reason:
+        description: >-
+          Provides the reason in the situation where a reason code is required
+          in addition to the content.
+        $ref: '#/definitions/CodeableConcept'
+    additionalProperties: false
+    required:
+      - category
+  Quantity:
+    description: >-
+      A measured amount (or an amount that can potentially be measured). Note
+      that measured amounts include amounts that are not precisely quantified,
+      including amounts involving arbitrary units and floating currencies.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      value:
+        description: >-
+          The value of the measured amount. The value includes an implicit
+          precision in the presentation of the value.
+        $ref: '#/definitions/decimal'
+      comparator:
+        description: >-
+          How the value should be understood and represented - whether the
+          actual value is greater or less than the stated value due to
+          measurement issues; e.g. if the comparator is "<" , then the real
+          value is < stated value.
+        enum:
+          - <
+          - <=
+          - '>='
+          - '>'
+        type: string
+      unit:
+        description: A human-readable form of the unit.
+        $ref: '#/definitions/string'
+      system:
+        description: >-
+          The identification of the system that provides the coded form of the
+          unit.
+        $ref: '#/definitions/uri'
+      code:
+        description: >-
+          A computer processable form of the unit in some unit representation
+          system.
+        $ref: '#/definitions/code'
+    additionalProperties: false
+  decimal:
+    pattern: '^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$'
+    type: number
+    description: A rational number with implicit precision
+  Attachment:
+    description: For referring to data content defined in other formats.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      contentType:
+        description: >-
+          Identifies the type of the data in the attachment and allows a method
+          to be chosen to interpret or render the data. Includes mime type
+          parameters such as charset where appropriate.
+        $ref: '#/definitions/code'
+      language:
+        description: >-
+          The human language of the content. The value can be any valid value
+          according to BCP 47.
+        $ref: '#/definitions/code'
+      data:
+        description: >-
+          The actual data of the attachment - a sequence of bytes, base64
+          encoded.
+        $ref: '#/definitions/base64Binary'
+      url:
+        description: A location where the data can be accessed.
+        $ref: '#/definitions/url'
+      size:
+        description: >-
+          The number of bytes of data that make up this attachment (before
+          base64 encoding, if that is done).
+        $ref: '#/definitions/unsignedInt'
+      hash:
+        description: The calculated hash of the data using SHA-1. Represented using base64.
+        $ref: '#/definitions/base64Binary'
+      title:
+        description: A label or set of text to display in place of the data.
+        $ref: '#/definitions/string'
+      creation:
+        description: The date that the attachment was first created.
+        $ref: '#/definitions/dateTime'
+    additionalProperties: false
+  base64Binary:
+    type: string
+    description: A stream of bytes
+  url:
+    pattern: ^\S*$
+    type: string
+    description: A URI that is a literal reference
+  unsignedInt:
+    pattern: '^[0]|([1-9][0-9]*)$'
+    type: number
+    description: An integer with a value that is not negative (e.g. >= 0)
+  Claim_Diagnosis:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify diagnosis entries.
+        $ref: '#/definitions/positiveInt'
+      diagnosisCodeableConcept:
+        description: >-
+          The nature of illness or problem in a coded form or as a reference to
+          an external defined Condition.
+        $ref: '#/definitions/CodeableConcept'
+      diagnosisReference:
+        description: >-
+          The nature of illness or problem in a coded form or as a reference to
+          an external defined Condition.
+        $ref: '#/definitions/id'
+      type:
+        description: When the condition was observed or the relative ranking.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      onAdmission:
+        description: >-
+          Indication of whether the diagnosis was present on admission to a
+          facility.
+        $ref: '#/definitions/CodeableConcept'
+      packageCode:
+        description: >-
+          A package billing code or bundle code used to group products and
+          services to a particular health condition (such as heart attack) which
+          is based on a predetermined grouping code system.
+        $ref: '#/definitions/CodeableConcept'
+    additionalProperties: false
+  Claim_Procedure:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify procedure entries.
+        $ref: '#/definitions/positiveInt'
+      type:
+        description: When the condition was observed or the relative ranking.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      date:
+        description: Date and optionally time the procedure was performed.
+        $ref: '#/definitions/dateTime'
+      procedureCodeableConcept:
+        description: >-
+          The code or reference to a Procedure resource which identifies the
+          clinical intervention performed.
+        $ref: '#/definitions/CodeableConcept'
+      procedureReference:
+        description: >-
+          The code or reference to a Procedure resource which identifies the
+          clinical intervention performed.
+        $ref: '#/definitions/id'
+      udi:
+        description: Unique Device Identifiers associated with this line item.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+    additionalProperties: false
+  Claim_Insurance:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: >-
+          A number to uniquely identify insurance entries and provide a sequence
+          of coverages to convey coordination of benefit order.
+        $ref: '#/definitions/positiveInt'
+      focal:
+        description: >-
+          A flag to indicate that this Coverage is to be used for adjudication
+          of this claim when set to true.
+        $ref: '#/definitions/boolean'
+      identifier:
+        description: >-
+          The business identifier to be used when the claim is sent for
+          adjudication against this insurance policy.
+        $ref: '#/definitions/Identifier'
+      coverage:
+        description: >-
+          Reference to the insurance card level information contained in the
+          Coverage resource. The coverage issuing insurer will use these details
+          to locate the patient's actual coverage within the insurer's
+          information system.
+        $ref: '#/definitions/id'
+      businessArrangement:
+        description: >-
+          A business agreement number established between the provider and the
+          insurer for special business processing purposes.
+        $ref: '#/definitions/string'
+      preAuthRef:
+        description: >-
+          Reference numbers previously provided by the insurer to the provider
+          to be quoted on subsequent claims containing services or products
+          related to the prior authorization.
+        items:
+          $ref: '#/definitions/string'
+        type: array
+      claimResponse:
+        description: >-
+          The result of the adjudication of the line items for the Coverage
+          specified in this insurance.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+    required:
+      - coverage
+  Claim_Accident:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      date:
+        description: >-
+          Date of an accident event  related to the products and services
+          contained in the claim.
+        $ref: '#/definitions/date'
+      type:
+        description: >-
+          The type or context of the accident event for the purposes of
+          selection of potential insurance coverages and determination of
+          coordination between insurers.
+        $ref: '#/definitions/CodeableConcept'
+      locationAddress:
+        description: The physical location of the accident event.
+        $ref: '#/definitions/Address'
+      locationReference:
+        description: The physical location of the accident event.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+  date:
+    pattern: >-
+      ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?$
+    type: string
+    description: >-
+      A date or partial date (e.g. just year or year + month). There is no time
+      zone. The format is a union of the schema types gYear, gYearMonth and
+      date.  Dates SHALL be valid dates.
+  Address:
+    description: >-
+      An address expressed using postal conventions (as opposed to GPS or other
+      location definition formats).  This data type may be used to convey
+      addresses for use in delivering mail as well as for visiting locations
+      which might not be valid for mail delivery.  There are a variety of postal
+      address formats defined around the world.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      use:
+        description: The purpose of this address.
+        enum:
+          - home
+          - work
+          - temp
+          - old
+          - billing
+        type: string
+      type:
+        description: >-
+          Distinguishes between physical addresses (those you can visit) and
+          mailing addresses (e.g. PO Boxes and care-of addresses). Most
+          addresses are both.
+        enum:
+          - postal
+          - physical
+          - both
+        type: string
+      text:
+        description: >-
+          Specifies the entire address as it should be displayed e.g. on a
+          postal label. This may be provided instead of or as well as the
+          specific parts.
+        $ref: '#/definitions/string'
+      line:
+        description: >-
+          This component contains the house number, apartment number, street
+          name, street direction,  P.O. Box number, delivery hints, and similar
+          address information.
+        items:
+          $ref: '#/definitions/string'
+        type: array
+      city:
+        description: >-
+          The name of the city, town, suburb, village or other community or
+          delivery center.
+        $ref: '#/definitions/string'
+      district:
+        description: The name of the administrative area (county).
+        $ref: '#/definitions/string'
+      state:
+        description: >-
+          Sub-unit of a country with limited sovereignty in a federally
+          organized country. A code may be used if codes are in common use (e.g.
+          US 2 letter state codes).
+        $ref: '#/definitions/string'
+      postalCode:
+        description: A postal code designating a region defined by the postal service.
+        $ref: '#/definitions/string'
+      country:
+        description: Country - a nation as commonly understood or generally accepted.
+        $ref: '#/definitions/string'
+      period:
+        description: Time period when address was/is in use.
+        $ref: '#/definitions/Period'
+    additionalProperties: false
+  Claim_Item:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify item entries.
+        $ref: '#/definitions/positiveInt'
+      careTeamSequence:
+        description: CareTeam members related to this service or product.
+        items:
+          $ref: '#/definitions/positiveInt'
+        type: array
+      diagnosisSequence:
+        description: Diagnosis applicable for this service or product.
+        items:
+          $ref: '#/definitions/positiveInt'
+        type: array
+      procedureSequence:
+        description: Procedures applicable for this service or product.
+        items:
+          $ref: '#/definitions/positiveInt'
+        type: array
+      informationSequence:
+        description: >-
+          Exceptions, special conditions and supporting information applicable
+          for this service or product.
+        items:
+          $ref: '#/definitions/positiveInt'
+        type: array
+      revenue:
+        description: >-
+          The type of revenue or cost center providing the product and/or
+          service.
+        $ref: '#/definitions/CodeableConcept'
+      category:
+        description: >-
+          Code to identify the general type of benefits under which products and
+          services are provided.
+        $ref: '#/definitions/CodeableConcept'
+      productOrService:
+        description: >-
+          When the value is a group code then this item collects a set of
+          related claim details, otherwise this contains the product, service,
+          drug or other billing code for the item.
+        $ref: '#/definitions/CodeableConcept'
+      modifier:
+        description: >-
+          Item typification or modifiers codes to convey additional context for
+          the product or service.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      programCode:
+        description: Identifies the program under which this may be recovered.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      servicedDate:
+        description: >-
+          The date or dates when the service or product was supplied, performed
+          or completed.
+        pattern: >-
+          ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?$
+        type: string
+      servicedPeriod:
+        description: >-
+          The date or dates when the service or product was supplied, performed
+          or completed.
+        $ref: '#/definitions/Period'
+      locationCodeableConcept:
+        description: Where the product or service was provided.
+        $ref: '#/definitions/CodeableConcept'
+      locationAddress:
+        description: Where the product or service was provided.
+        $ref: '#/definitions/Address'
+      locationReference:
+        description: Where the product or service was provided.
+        $ref: '#/definitions/id'
+      quantity:
+        description: The number of repetitions of a service or product.
+        $ref: '#/definitions/Quantity'
+      unitPrice:
+        description: >-
+          If the item is not a group then this is the fee for the product or
+          service, otherwise this is the total of the fees for the details of
+          the group.
+        $ref: '#/definitions/Money'
+      factor:
+        description: >-
+          A real number that represents a multiplier used in determining the
+          overall value of services delivered and/or goods received. The concept
+          of a Factor allows for a discount or surcharge multiplier to be
+          applied to a monetary amount.
+        $ref: '#/definitions/decimal'
+      net:
+        description: >-
+          The quantity times the unit price for an additional service or product
+          or charge.
+        $ref: '#/definitions/Money'
+      udi:
+        description: Unique Device Identifiers associated with this line item.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      bodySite:
+        description: 'Physical service site on the patient (limb, tooth, etc.).'
+        $ref: '#/definitions/CodeableConcept'
+      subSite:
+        description: >-
+          A region or surface of the bodySite, e.g. limb region or tooth
+          surface(s).
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      encounter:
+        description: >-
+          The Encounters during which this Claim was created or to which the
+          creation of this record is tightly associated.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      detail:
+        description: >-
+          A claim detail line. Either a simple (a product or service) or a
+          'group' of sub-details which are simple items.
+        items:
+          $ref: '#/definitions/Claim_Detail'
+        type: array
+    additionalProperties: false
+    required:
+      - productOrService
+  Money:
+    description: An amount of economic utility in some recognized currency.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      value:
+        description: Numerical value (with implicit precision).
+        $ref: '#/definitions/decimal'
+      currency:
+        description: ISO 4217 Currency Code.
+        $ref: '#/definitions/code'
+    additionalProperties: false
+  Claim_Detail:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify item entries.
+        $ref: '#/definitions/positiveInt'
+      revenue:
+        description: >-
+          The type of revenue or cost center providing the product and/or
+          service.
+        $ref: '#/definitions/CodeableConcept'
+      category:
+        description: >-
+          Code to identify the general type of benefits under which products and
+          services are provided.
+        $ref: '#/definitions/CodeableConcept'
+      productOrService:
+        description: >-
+          When the value is a group code then this item collects a set of
+          related claim details, otherwise this contains the product, service,
+          drug or other billing code for the item.
+        $ref: '#/definitions/CodeableConcept'
+      modifier:
+        description: >-
+          Item typification or modifiers codes to convey additional context for
+          the product or service.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      programCode:
+        description: Identifies the program under which this may be recovered.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      quantity:
+        description: The number of repetitions of a service or product.
+        $ref: '#/definitions/Quantity'
+      unitPrice:
+        description: >-
+          If the item is not a group then this is the fee for the product or
+          service, otherwise this is the total of the fees for the details of
+          the group.
+        $ref: '#/definitions/Money'
+      factor:
+        description: >-
+          A real number that represents a multiplier used in determining the
+          overall value of services delivered and/or goods received. The concept
+          of a Factor allows for a discount or surcharge multiplier to be
+          applied to a monetary amount.
+        $ref: '#/definitions/decimal'
+      net:
+        description: >-
+          The quantity times the unit price for an additional service or product
+          or charge.
+        $ref: '#/definitions/Money'
+      udi:
+        description: Unique Device Identifiers associated with this line item.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      subDetail:
+        description: >-
+          A claim detail line. Either a simple (a product or service) or a
+          'group' of sub-details which are simple items.
+        items:
+          $ref: '#/definitions/Claim_SubDetail'
+        type: array
+    additionalProperties: false
+    required:
+      - productOrService
+  Claim_SubDetail:
+    description: >-
+      A provider issued list of professional services and products which have
+      been provided, or are to be provided, to a patient which is sent to an
+      insurer for reimbursement.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      sequence:
+        description: A number to uniquely identify item entries.
+        $ref: '#/definitions/positiveInt'
+      revenue:
+        description: >-
+          The type of revenue or cost center providing the product and/or
+          service.
+        $ref: '#/definitions/CodeableConcept'
+      category:
+        description: >-
+          Code to identify the general type of benefits under which products and
+          services are provided.
+        $ref: '#/definitions/CodeableConcept'
+      productOrService:
+        description: >-
+          When the value is a group code then this item collects a set of
+          related claim details, otherwise this contains the product, service,
+          drug or other billing code for the item.
+        $ref: '#/definitions/CodeableConcept'
+      modifier:
+        description: >-
+          Item typification or modifiers codes to convey additional context for
+          the product or service.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      programCode:
+        description: Identifies the program under which this may be recovered.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      quantity:
+        description: The number of repetitions of a service or product.
+        $ref: '#/definitions/Quantity'
+      unitPrice:
+        description: >-
+          If the item is not a group then this is the fee for the product or
+          service, otherwise this is the total of the fees for the details of
+          the group.
+        $ref: '#/definitions/Money'
+      factor:
+        description: >-
+          A real number that represents a multiplier used in determining the
+          overall value of services delivered and/or goods received. The concept
+          of a Factor allows for a discount or surcharge multiplier to be
+          applied to a monetary amount.
+        $ref: '#/definitions/decimal'
+      net:
+        description: >-
+          The quantity times the unit price for an additional service or product
+          or charge.
+        $ref: '#/definitions/Money'
+      udi:
+        description: Unique Device Identifiers associated with this line item.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+    additionalProperties: false
+    required:
+      - productOrService
+  ResourceList:
+    $ref: '#/definitions/Claim'
+paths:
+  '/Claim/{ClaimId}':
+    get:
+      operationId: Claim.get
+      responses:
+        '200':
+          description: 200 OK
+      parameters:
+        - name: ClaimId
+          type: string
+          required: true
+          in: path
+  /Claim:
+    post:
+      tags:
+        - Claim
+      summary: Create a new instance of the model and persist it into the data source.
+      operationId: Claim.create
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Claim'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Claim'
+      deprecated: false
+    put:
+      tags:
+        - Claim
+      summary: >-
+        Patch an existing model instance or insert a new one into the data
+        source.
+      operationId: Claim.upsert__put_Claims
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Claim'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Claim'
+      deprecated: false
+    patch:
+      tags:
+        - Claim
+      summary: >-
+        Patch an existing model instance or insert a new one into the data
+        source.
+      operationId: Claim.upsert__patch_Claims
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Claim'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Claim'
+      deprecated: false
