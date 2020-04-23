@@ -1,0 +1,829 @@
+swagger: '2.0'
+info:
+  title: encounter-api
+  x-ibm-name: encounter-api
+  version: 1.0.1
+host: $(catalog.host)
+schemes:
+  - https
+basePath: /ibmfhir
+produces:
+  - application/json
+consumes:
+  - application/json
+security:
+  - clientIdHeader: []
+    clientSecretHeader: []
+securityDefinitions:
+  clientIdHeader:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+  clientSecretHeader:
+    in: header
+    name: X-IBM-Client-Secret
+    type: apiKey
+x-ibm-configuration:
+  enforced: true
+  testable: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+      - switch:
+          version: 2.0.0
+          title: switch
+          case:
+            - condition: (($operationID() = 'Encounter.create'))
+              execute:
+                - invoke:
+                    version: 2.0.0
+                    target-url: 'https://$(fhir_host)$(api.operation.path)'
+                    username: fhiruser
+                    password: Pass@1234
+                    verb: keep
+            - condition: (($operationID() = 'Encounter.get'))
+              execute:
+                - invoke:
+                    version: 2.0.0
+                    target-url: 'https://$(fhir_host)$(api.operation.path)'
+                    username: fhiruser
+                    password: Pass@1234
+                    verb: keep
+          otherwise: []
+  properties:
+    fhir_host:
+      value: 'gitlab.prolifics.com:9443/fhir-server/api/v4'
+      description: Hostname of the Watson FHIR Server resource
+      encoded: false
+  gateway: datapower-api-gateway
+  type: rest
+  phase: realized
+  application-authentication:
+    certificate: false
+  activity-log:
+    enabled: true
+    error-content: header
+    success-content: activity
+definitions:
+  Encounter:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      resourceType:
+        description: This is a Encounter resource
+        enum:
+          - Encounter
+      id:
+        description: >-
+          The logical id of the resource, as used in the URL for the resource.
+          Once assigned, this value never changes.
+        $ref: '#/definitions/id'
+      meta:
+        description: >-
+          The metadata about the resource. This is content that is maintained by
+          the infrastructure. Changes to the content might not always be
+          associated with version changes to the resource.
+        $ref: '#/definitions/Meta'
+      implicitRules:
+        description: >-
+          A reference to a set of rules that were followed when the resource was
+          constructed, and which must be understood when processing the content.
+          Often, this is a reference to an implementation guide that defines the
+          special rules along with other profiles etc.
+        $ref: '#/definitions/uri'
+      language:
+        description: The base language in which the resource is written.
+        $ref: '#/definitions/code'
+      text:
+        description: >-
+          A human-readable narrative that contains a summary of the resource and
+          can be used to represent the content of the resource to a human. The
+          narrative need not encode all the structured data, but is required to
+          contain sufficient detail to make it "clinically safe" for a human to
+          just read the narrative. Resource definitions may define what content
+          should be represented in the narrative to ensure clinical safety.
+        $ref: '#/definitions/Narrative'
+      contained:
+        description: >-
+          These resources do not have an independent existence apart from the
+          resource that contains them - they cannot be identified independently,
+          and nor can they have their own independent transaction scope.
+        items:
+          $ref: '#/definitions/ResourceList'
+        type: array
+      identifier:
+        description: Identifier(s) by which this encounter is known.
+        items:
+          $ref: '#/definitions/Identifier'
+        type: array
+      status:
+        description: >-
+          planned | arrived | triaged | in-progress | onleave | finished |
+          cancelled +.
+        enum:
+          - planned
+          - arrived
+          - triaged
+          - in-progress
+          - onleave
+          - finished
+          - cancelled
+          - entered-in-error
+          - unknown
+      statusHistory:
+        description: >-
+          The status history permits the encounter resource to contain the
+          status history without needing to read through the historical versions
+          of the resource, or even have the server store them.
+        items:
+          $ref: '#/definitions/Encounter_StatusHistory'
+        type: array
+      class:
+        description: >-
+          Concepts representing classification of patient encounter such as
+          ambulatory (outpatient), inpatient, emergency, home health or others
+          due to local variations.
+        $ref: '#/definitions/Coding'
+      classHistory:
+        description: >-
+          The class history permits the tracking of the encounters transitions
+          without needing to go  through the resource history.  This would be
+          used for a case where an admission starts of as an emergency
+          encounter, then transitions into an inpatient scenario. Doing this and
+          not restarting a new encounter ensures that any lab/diagnostic results
+          can more easily follow the patient and not require re-processing and
+          not get lost or cancelled during a kind of discharge from emergency to
+          inpatient.
+        items:
+          $ref: '#/definitions/Encounter_ClassHistory'
+        type: array
+      type:
+        description: >-
+          Specific type of encounter (e.g. e-mail consultation, surgical
+          day-care, skilled nursing, rehabilitation).
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      serviceType:
+        description: >-
+          Broad categorization of the service that is to be provided (e.g.
+          cardiology).
+        $ref: '#/definitions/CodeableConcept'
+      priority:
+        description: Indicates the urgency of the encounter.
+        $ref: '#/definitions/CodeableConcept'
+      subject:
+        description: The patient or group present at the encounter.
+        $ref: '#/definitions/id'
+      episodeOfCare:
+        description: >-
+          Where a specific encounter should be classified as a part of a
+          specific episode(s) of care this field should be used. This
+          association can facilitate grouping of related encounters together for
+          a specific purpose, such as government reporting, issue tracking,
+          association via a common problem.  The association is recorded on the
+          encounter as these are typically created after the episode of care and
+          grouped on entry rather than editing the episode of care to append
+          another encounter to it (the episode of care could span years).
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      basedOn:
+        description: >-
+          The request this encounter satisfies (e.g. incoming referral or
+          procedure request).
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      participant:
+        description: The list of people responsible for providing the service.
+        items:
+          $ref: '#/definitions/Encounter_Participant'
+        type: array
+      appointment:
+        description: The appointment that scheduled this encounter.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      period:
+        description: The start and end time of the encounter.
+        $ref: '#/definitions/Period'
+      length:
+        description: >-
+          Quantity of time the encounter lasted. This excludes the time during
+          leaves of absence.
+        $ref: '#/definitions/Duration'
+      reasonCode:
+        description: >-
+          Reason the encounter takes place, expressed as a code. For admissions,
+          this can be used for a coded admission diagnosis.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      reasonReference:
+        description: >-
+          Reason the encounter takes place, expressed as a code. For admissions,
+          this can be used for a coded admission diagnosis.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      diagnosis:
+        description: The list of diagnosis relevant to this encounter.
+        items:
+          $ref: '#/definitions/Encounter_Diagnosis'
+        type: array
+      account:
+        description: The set of accounts that may be used for billing for this Encounter.
+        items:
+          $ref: '#/definitions/id'
+        type: array
+      hospitalization:
+        description: Details about the admission to a healthcare service.
+        $ref: '#/definitions/Encounter_Hospitalization'
+      location:
+        description: List of locations where  the patient has been during this encounter.
+        items:
+          $ref: '#/definitions/Encounter_Location'
+        type: array
+      serviceProvider:
+        description: >-
+          The organization that is primarily responsible for this Encounter's
+          services. This MAY be the same as the organization on the Patient
+          record, however it could be different, such as if the actor performing
+          the services was from an external organization (which may be billed
+          seperately) for an external consultation.  Refer to the example bundle
+          showing an abbreviated set of Encounters for a colonoscopy.
+        $ref: '#/definitions/id'
+      partOf:
+        description: >-
+          Another Encounter of which this encounter is a part of
+          (administratively or in time).
+        $ref: '#/definitions/id'
+    additionalProperties: false
+    required:
+      - class
+      - resourceType
+  id:
+    pattern: '^[A-Za-z0-9\-\.]{1,64}$'
+    type: string
+    description: >-
+      Any combination of letters, numerals, "-" and ".", with a length limit of
+      64 characters.  (This might be an integer, an unprefixed OID, UUID or any
+      other identifier pattern that meets these constraints.)  Ids are
+      case-insensitive.
+  Meta:
+    description: >-
+      The metadata about a resource. This is content in the resource that is
+      maintained by the infrastructure. Changes to the content might not always
+      be associated with version changes to the resource.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      versionId:
+        description: >-
+          The version specific identifier, as it appears in the version portion
+          of the URL. This value changes when the resource is created, updated,
+          or deleted.
+        $ref: '#/definitions/id'
+      lastUpdated:
+        description: When the resource last changed - e.g. when the version changed.
+        $ref: '#/definitions/instant'
+      source:
+        description: >-
+          A uri that identifies the source system of the resource. This provides
+          a minimal amount of [[[Provenance]]] information that can be used to
+          track or differentiate the source of information in the resource. The
+          source may identify another FHIR server, document, message, database,
+          etc.
+        $ref: '#/definitions/uri'
+      profile:
+        description: >-
+          A list of profiles (references to [[[StructureDefinition]]] resources)
+          that this resource claims to conform to. The URL is a reference to
+          [[[StructureDefinition.url]]].
+        items:
+          $ref: '#/definitions/canonical'
+        type: array
+      security:
+        description: >-
+          Security labels applied to this resource. These tags connect specific
+          resources to the overall security policy and infrastructure.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+      tag:
+        description: >-
+          Tags applied to this resource. Tags are intended to be used to
+          identify and relate resources to process and workflow, and
+          applications are not required to consider the tags when interpreting
+          the meaning of a resource.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+    additionalProperties: false
+  string:
+    pattern: '^[ \r\n\t\S]+$'
+    type: string
+    description: A sequence of Unicode characters
+  instant:
+    pattern: >-
+      ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))$
+    type: string
+    description: An instant in time - known at least to the second
+  uri:
+    pattern: ^\S*$
+    type: string
+    description: String of characters used to identify a name or a resource
+  canonical:
+    pattern: ^\S*$
+    type: string
+    description: A URI that is a reference to a canonical URL on a FHIR resource
+  Coding:
+    description: A reference to a code defined by a terminology system.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      system:
+        description: >-
+          The identification of the code system that defines the meaning of the
+          symbol in the code.
+        $ref: '#/definitions/uri'
+      version:
+        description: >-
+          The version of the code system which was used when choosing this code.
+          Note that a well-maintained code system does not need the version
+          reported, because the meaning of codes is consistent across versions.
+          However this cannot consistently be assured, and when the meaning is
+          not guaranteed to be consistent, the version SHOULD be exchanged.
+        $ref: '#/definitions/string'
+      code:
+        description: >-
+          A symbol in syntax defined by the system. The symbol may be a
+          predefined code or an expression in a syntax defined by the coding
+          system (e.g. post-coordination).
+        $ref: '#/definitions/code'
+      display:
+        description: >-
+          A representation of the meaning of the code in the system, following
+          the rules of the system.
+        $ref: '#/definitions/string'
+      userSelected:
+        description: >-
+          Indicates that this coding was chosen by a user directly - e.g. off a
+          pick list of available items (codes or displays).
+        $ref: '#/definitions/boolean'
+    additionalProperties: false
+  code:
+    pattern: '^[^\s]+(\s[^\s]+)*$'
+    type: string
+    description: >-
+      A string which has at least one character and no leading or trailing
+      whitespace and where there is no whitespace other than single spaces in
+      the contents
+  boolean:
+    pattern: ^true|false$
+    type: boolean
+    description: Value of "true" or "false"
+  Narrative:
+    description: >-
+      A human-readable summary of the resource conveying the essential clinical
+      and business information for the resource.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      status:
+        description: >-
+          The status of the narrative - whether it's entirely generated (from
+          just the defined data or the extensions too), or whether a human
+          authored it and it may contain additional data.
+        enum:
+          - generated
+          - extensions
+          - additional
+          - empty
+      div:
+        description: 'The actual narrative content, a stripped down version of XHTML.'
+        $ref: '#/definitions/xhtml'
+    additionalProperties: false
+    required:
+      - div
+  xhtml:
+    description: xhtml - escaped html (see specfication)
+  Identifier:
+    description: >-
+      An identifier - identifies some entity uniquely and unambiguously.
+      Typically this is used for business identifiers.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      use:
+        description: The purpose of this identifier.
+        enum:
+          - usual
+          - official
+          - temp
+          - secondary
+          - old
+      type:
+        description: >-
+          A coded type for the identifier that can be used to determine which
+          identifier to use for a specific purpose.
+        $ref: '#/definitions/CodeableConcept'
+      system:
+        description: >-
+          Establishes the namespace for the value - that is, a URL that
+          describes a set values that are unique.
+        $ref: '#/definitions/uri'
+      value:
+        description: >-
+          The portion of the identifier typically relevant to the user and which
+          is unique within the context of the system.
+        $ref: '#/definitions/string'
+      period:
+        description: Time period during which identifier is/was valid for use.
+        $ref: '#/definitions/Period'
+      assigner:
+        description: Organization that issued/manages the identifier.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+  CodeableConcept:
+    description: >-
+      A concept that may be defined by a formal reference to a terminology or
+      ontology or may be provided by text.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      coding:
+        description: A reference to a code defined by a terminology system.
+        items:
+          $ref: '#/definitions/Coding'
+        type: array
+      text:
+        description: >-
+          A human language representation of the concept as
+          seen/selected/uttered by the user who entered the data and/or which
+          represents the intended meaning of the user.
+        $ref: '#/definitions/string'
+    additionalProperties: false
+  Period:
+    description: A time period defined by a start and end date and optionally time.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      start:
+        description: The start of the period. The boundary is inclusive.
+        $ref: '#/definitions/dateTime'
+      end:
+        description: >-
+          The end of the period. If the end of the period is missing, it means
+          no end was known or planned at the time the instance was created. The
+          start may be in the past, and the end date in the future, which means
+          that period is expected/planned to end at that time.
+        $ref: '#/definitions/dateTime'
+    additionalProperties: false
+  dateTime:
+    pattern: >-
+      ^([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?$
+    type: string
+    description: >-
+      A date, date-time or partial date (e.g. just year or year + month).  If
+      hours and minutes are specified, a time zone SHALL be populated. The
+      format is a union of the schema types gYear, gYearMonth, date and
+      dateTime. Seconds must be provided due to schema type constraints but may
+      be zero-filled and may be ignored.                 Dates SHALL be valid
+      dates.
+  Encounter_StatusHistory:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      status:
+        description: >-
+          planned | arrived | triaged | in-progress | onleave | finished |
+          cancelled +.
+        enum:
+          - planned
+          - arrived
+          - triaged
+          - in-progress
+          - onleave
+          - finished
+          - cancelled
+          - entered-in-error
+          - unknown
+      period:
+        description: The time that the episode was in the specified status.
+        $ref: '#/definitions/Period'
+    additionalProperties: false
+    required:
+      - period
+  Encounter_ClassHistory:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      class:
+        description: inpatient | outpatient | ambulatory | emergency +.
+        $ref: '#/definitions/Coding'
+      period:
+        description: The time that the episode was in the specified class.
+        $ref: '#/definitions/Period'
+    additionalProperties: false
+    required:
+      - period
+      - class
+  Encounter_Participant:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      type:
+        description: Role of participant in encounter.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      period:
+        description: >-
+          The period of time that the specified participant participated in the
+          encounter. These can overlap or be sub-sets of the overall encounter's
+          period.
+        $ref: '#/definitions/Period'
+      individual:
+        description: Persons involved in the encounter other than the patient.
+        $ref: '#/definitions/id'
+    additionalProperties: false
+  Duration:
+    description: A length of time.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      value:
+        description: >-
+          The value of the measured amount. The value includes an implicit
+          precision in the presentation of the value.
+        $ref: '#/definitions/decimal'
+      comparator:
+        description: >-
+          How the value should be understood and represented - whether the
+          actual value is greater or less than the stated value due to
+          measurement issues; e.g. if the comparator is "<" , then the real
+          value is < stated value.
+        enum:
+          - <
+          - <=
+          - '>='
+          - '>'
+      unit:
+        description: A human-readable form of the unit.
+        $ref: '#/definitions/string'
+      system:
+        description: >-
+          The identification of the system that provides the coded form of the
+          unit.
+        $ref: '#/definitions/uri'
+      code:
+        description: >-
+          A computer processable form of the unit in some unit representation
+          system.
+        $ref: '#/definitions/code'
+    additionalProperties: false
+  decimal:
+    pattern: '^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$'
+    type: number
+    description: A rational number with implicit precision
+  Encounter_Diagnosis:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      condition:
+        description: >-
+          Reason the encounter takes place, as specified using information from
+          another resource. For admissions, this is the admission diagnosis. The
+          indication will typically be a Condition (with other resources
+          referenced in the evidence.detail), or a Procedure.
+        $ref: '#/definitions/id'
+      use:
+        description: >-
+          Role that this diagnosis has within the encounter (e.g. admission,
+          billing, discharge …).
+        $ref: '#/definitions/CodeableConcept'
+      rank:
+        description: Ranking of the diagnosis (for each role type).
+        $ref: '#/definitions/positiveInt'
+    additionalProperties: false
+    required:
+      - condition
+  positiveInt:
+    pattern: '^[1-9][0-9]*$'
+    type: number
+    description: An integer with a value that is positive (e.g. >0)
+  Encounter_Hospitalization:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      preAdmissionIdentifier:
+        description: Pre-admission identifier.
+        $ref: '#/definitions/Identifier'
+      origin:
+        description: >-
+          The location/organization from which the patient came before
+          admission.
+        $ref: '#/definitions/id'
+      admitSource:
+        description: 'From where patient was admitted (physician referral, transfer).'
+        $ref: '#/definitions/CodeableConcept'
+      reAdmission:
+        description: Whether this hospitalization is a readmission and why if known.
+        $ref: '#/definitions/CodeableConcept'
+      dietPreference:
+        description: Diet preferences reported by the patient.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      specialCourtesy:
+        description: 'Special courtesies (VIP, board member).'
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      specialArrangement:
+        description: >-
+          Any special requests that have been made for this hospitalization
+          encounter, such as the provision of specific equipment or other
+          things.
+        items:
+          $ref: '#/definitions/CodeableConcept'
+        type: array
+      destination:
+        description: Location/organization to which the patient is discharged.
+        $ref: '#/definitions/id'
+      dischargeDisposition:
+        description: Category or kind of location after discharge.
+        $ref: '#/definitions/CodeableConcept'
+    additionalProperties: false
+  Encounter_Location:
+    description: >-
+      An interaction between a patient and healthcare provider(s) for the
+      purpose of providing healthcare service(s) or assessing the health status
+      of a patient.
+    properties:
+      id:
+        description: >-
+          Unique id for the element within a resource (for internal references).
+          This may be any string value that does not contain spaces.
+        $ref: '#/definitions/string'
+      location:
+        description: The location where the encounter takes place.
+        $ref: '#/definitions/id'
+      status:
+        description: >-
+          The status of the participants' presence at the specified location
+          during the period specified. If the participant is no longer at the
+          location, then the period will have an end date/time.
+        enum:
+          - planned
+          - active
+          - reserved
+          - completed
+      physicalType:
+        description: >-
+          This will be used to specify the required levels (bed/ward/room/etc.)
+          desired to be recorded to simplify either messaging or query.
+        $ref: '#/definitions/CodeableConcept'
+      period:
+        description: Time period during which the patient was present at the location.
+        $ref: '#/definitions/Period'
+    additionalProperties: false
+    required:
+      - location
+  ResourceList:
+    $ref: '#/definitions/Encounter'
+paths:
+  '/Encounter/{EncounterId}':
+    get:
+      operationId: Encounter.get
+      responses:
+        '200':
+          description: 200 OK
+      parameters:
+        - name: EncounterId
+          type: string
+          required: true
+          in: path
+  /Encounter:
+    post:
+      tags:
+        - Encounter
+      summary: Create a new instance of the model and persist it into the data source.
+      operationId: Encounter.create
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Encounter'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Encounter'
+      deprecated: false
+    put:
+      tags:
+        - Encounter
+      summary: >-
+        Patch an existing model instance or insert a new one into the data
+        source.
+      operationId: Encounter.upsert__put_Encounters
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Encounter'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Encounter'
+      deprecated: false
+    patch:
+      tags:
+        - Encounter
+      summary: >-
+        Patch an existing model instance or insert a new one into the data
+        source.
+      operationId: Encounter.upsert__patch_Encounters
+      parameters:
+        - name: data
+          in: body
+          description: Model instance data
+          required: false
+          schema:
+            description: Model instance data
+            $ref: '#/definitions/Encounter'
+      responses:
+        '200':
+          description: Request was successful
+          schema:
+            $ref: '#/definitions/Encounter'
+      deprecated: false
