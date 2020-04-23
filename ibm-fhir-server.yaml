@@ -1,0 +1,70 @@
+info:
+  version: 1.0.0
+  title: IBM FHIR Server
+  name: ibm-fhir-server
+  summary: For FHIR APIs hosted on Watson FHIR Server
+gateways:
+  - datapower-api-gateway
+plans:
+  default-plan:
+    rate-limits:
+      default:
+        value: 100/1hour
+    title: Default Plan
+    description: Default Plan
+    approval: false
+apis:
+  allergyintolerance-api1.0.1:
+    $ref: allergyintolerance-api_1.0.1.yaml
+  careplan-api1.0.1:
+    $ref: careplan-api_1.0.1.yaml
+  claim-api1.0.1:
+    $ref: claim-api_1.0.1.yaml
+  condition-api1.0.1:
+    $ref: condition-api_1.0.1.yaml
+  coverage-api1.0.1:
+    $ref: coverage-api_1.0.1.yaml
+  coverageeligibilityrequest-api1.0.1:
+    $ref: coverageeligibilityrequest-api_1.0.1.yaml
+  coverageeligibilityresponse-api1.0.1:
+    $ref: coverageeligibilityresponse-api_1.0.1.yaml
+  diagnosticreport-api1.0.1:
+    $ref: diagnosticreport-api_1.0.1.yaml
+  documentreference-api1.0.1:
+    $ref: documentreference-api_1.0.1.yaml
+  encounter-api1.0.1:
+    $ref: encounter-api_1.0.1.yaml
+  immunization-api1.0.1:
+    $ref: immunization-api_1.0.1.yaml
+  medicationadministration-api1.0.1:
+    $ref: medicationadministration-api_1.0.1.yaml
+  medicationdispense-api1.0.1:
+    $ref: medicationdispense-api_1.0.1.yaml
+  medicationrequest-api1.0.1:
+    $ref: medicationrequest-api_1.0.1.yaml
+  medicationstatement-api1.0.1:
+    $ref: medicationstatement-api_1.0.1.yaml
+  observation-api1.0.1:
+    $ref: observation-api_1.0.1.yaml
+  patient-api1.0.1:
+    $ref: patient-api_1.0.1.yaml
+  paymentnotice-api1.0.1:
+    $ref: paymentnotice-api_1.0.1.yaml
+  practitioner-api1.0.1:
+    $ref: practitioner-api_1.0.1.yaml
+  procedure-api1.0.1:
+    $ref: procedure-api_1.0.1.yaml
+  schedule-api1.0.1:
+    $ref: schedule-api_1.0.1.yaml
+  servicerequest-api1.0.1:
+    $ref: servicerequest-api_1.0.1.yaml
+visibility:
+  view:
+    type: public
+    orgs: []
+    enabled: true
+  subscribe:
+    type: authenticated
+    orgs: []
+    enabled: true
+product: 1.0.0
